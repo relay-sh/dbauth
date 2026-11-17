@@ -1,4 +1,4 @@
-package sh.relay.dbauth;
+package sh.userelay.dbauth;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
