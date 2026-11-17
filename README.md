@@ -9,6 +9,7 @@ Bind a database user to an IAM role or user in the Relay dashboard, then connect
 | Go | `github.com/relay-sh/dbauth/go` | [go/](go) |
 | Node | `@relay-sh/dbauth` | [node/](node) |
 | Python | `relay-dbauth` | [python/](python) |
+| Java | `sh.relay:dbauth` | [java/](java) |
 
 ## Go
 
@@ -128,3 +129,53 @@ client = valkey.Valkey(host="cache.ab1cd.db.userelay.sh", port=6379, ssl=True, c
 ```
 
 `relay_dbauth.new_token` mints a single token without caching.
+
+## Java
+
+Java 11 or newer, built on the AWS SDK for Java v2.
+
+```xml
+<dependency>
+  <groupId>sh.relay</groupId>
+  <artifactId>dbauth</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
+PostgreSQL with JDBC:
+
+```java
+TokenSource tokens = new TokenSource("orders.ab1cd.db.userelay.sh", "us-east-1", DefaultCredentialsProvider.create());
+
+Connection conn = DriverManager.getConnection(
+    "jdbc:postgresql://orders.ab1cd.db.userelay.sh:5432/app?sslmode=verify-full", "orders_app", tokens.token());
+```
+
+HikariCP reads the password once from its config, so a pool configured with `setPassword` cannot open connections after the token expires. Give it a `DataSource` that asks the `TokenSource` for every new connection:
+
+```java
+PGSimpleDataSource source = new PGSimpleDataSource() {
+    @Override
+    public Connection getConnection() throws SQLException {
+        return super.getConnection(getUser(), tokens.token());
+    }
+};
+source.setURL("jdbc:postgresql://orders.ab1cd.db.userelay.sh:5432/app?sslmode=verify-full");
+source.setUser("orders_app");
+
+HikariConfig config = new HikariConfig();
+config.setDataSource(source);
+HikariDataSource pool = new HikariDataSource(config);
+```
+
+Valkey with Lettuce:
+
+```java
+RedisURI uri = RedisURI.builder()
+    .withHost("cache.ab1cd.db.userelay.sh").withPort(6379).withSsl(true)
+    .withAuthentication(RedisCredentialsProvider.from(() -> RedisCredentials.just("orders_app", tokens.token())))
+    .build();
+RedisClient client = RedisClient.create(uri);
+```
+
+`DbAuth.newToken` mints a single token without caching.
