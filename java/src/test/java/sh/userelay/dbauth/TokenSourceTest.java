@@ -1,4 +1,4 @@
-package sh.relay.dbauth;
+package sh.userelay.dbauth;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

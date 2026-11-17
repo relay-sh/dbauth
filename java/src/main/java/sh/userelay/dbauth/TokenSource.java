@@ -1,4 +1,4 @@
-package sh.relay.dbauth;
+package sh.userelay.dbauth;
 
 import java.time.Clock;
 import java.time.Duration;

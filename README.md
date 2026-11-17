@@ -9,7 +9,7 @@ Bind a database user to an IAM role or user in the Relay dashboard, then connect
 | Go | `github.com/relay-sh/dbauth/go` | [go/](go) |
 | Node | `@relay-sh/dbauth` | [node/](node) |
 | Python | `relay-dbauth` | [python/](python) |
-| Java | `sh.relay:dbauth` | [java/](java) |
+| Java | `sh.userelay:dbauth` | [java/](java) |
 
 ## Go
 
@@ -136,7 +136,7 @@ Java 11 or newer, built on the AWS SDK for Java v2.
 
 ```xml
 <dependency>
-  <groupId>sh.relay</groupId>
+  <groupId>sh.userelay</groupId>
   <artifactId>dbauth</artifactId>
   <version>0.1.0</version>
 </dependency>
