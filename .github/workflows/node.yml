@@ -31,4 +31,9 @@ jobs:
         with:
           node-version: 18
       - name: Mint a token on the oldest supported Node
-        run: node --input-type=module -e "import { newToken } from './dist/index.js'; const t = await newToken({ host: 'a.b.example.com', credentials: { accessKeyId: 'AKIDSMOKE', secretAccessKey: 's' } }); if (!t.startsWith('sts.amazonaws.com/?')) process.exit(1)"
+        run: |
+          node --input-type=module -e "
+          import { newToken } from './dist/index.js';
+          const t = await newToken({ host: 'a.b.example.com', credentials: { accessKeyId: 'AKIDSMOKE', secretAccessKey: 's' } });
+          if (!t.startsWith('sts.amazonaws.com/?')) process.exit(1);
+          "
