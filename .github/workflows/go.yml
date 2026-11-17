@@ -1,0 +1,32 @@
+name: go
+
+on:
+  push:
+    branches: [main]
+    paths: ["go/**", "testvectors/**", ".github/workflows/go.yml"]
+  pull_request:
+    paths: ["go/**", "testvectors/**", ".github/workflows/go.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+      - run: go vet ./...
+      - run: go test -race -coverprofile=cover.out ./...
+      - name: Coverage
+        run: |
+          go tool cover -func=cover.out | awk '$NF != "100.0%" && $1 != "total:" { bad = 1; print } END { exit bad }'
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64
+          working-directory: go
