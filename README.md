@@ -7,6 +7,7 @@ Bind a database user to an IAM role or user in the Relay dashboard, then connect
 | Language | Package | Directory |
 | --- | --- | --- |
 | Go | `github.com/relay-sh/dbauth/go` | [go/](go) |
+| Node | `@relay-sh/dbauth` | [node/](node) |
 
 ## Go
 
@@ -43,3 +44,50 @@ client, _ := valkey.NewClient(valkey.ClientOption{
 ```
 
 `dbauth.NewToken` mints a single token without caching.
+
+## Node
+
+```sh
+npm install @relay-sh/dbauth @aws-sdk/credential-providers
+```
+
+PostgreSQL with node-postgres, which accepts an async `password` function and calls it for every new connection:
+
+```ts
+import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
+import { TokenSource } from "@relay-sh/dbauth";
+import pg from "pg";
+
+const tokens = new TokenSource({
+  host: "orders.ab1cd.db.userelay.sh",
+  region: process.env.AWS_REGION,
+  credentials: fromNodeProviderChain(),
+});
+
+const pool = new pg.Pool({
+  host: "orders.ab1cd.db.userelay.sh",
+  user: "orders_app",
+  database: "app",
+  ssl: true,
+  password: () => tokens.token(),
+});
+```
+
+Valkey with iovalkey (an ioredis fork). It has no per-connection password callback, so refresh the password when the client schedules a reconnect; the new token is cached, and the retry delay gives it time to resolve:
+
+```ts
+import Valkey from "iovalkey";
+
+const client = new Valkey({
+  host: "cache.ab1cd.db.userelay.sh",
+  port: 6379,
+  tls: {},
+  username: "orders_app",
+  password: await tokens.token(),
+});
+client.on("reconnecting", async () => {
+  client.options.password = await tokens.token();
+});
+```
+
+`newToken` mints a single token without caching.
