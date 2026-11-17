@@ -8,6 +8,7 @@ Bind a database user to an IAM role or user in the Relay dashboard, then connect
 | --- | --- | --- |
 | Go | `github.com/relay-sh/dbauth/go` | [go/](go) |
 | Node | `@relay-sh/dbauth` | [node/](node) |
+| Python | `relay-dbauth` | [python/](python) |
 
 ## Go
 
@@ -91,3 +92,39 @@ client.on("reconnecting", async () => {
 ```
 
 `newToken` mints a single token without caching.
+
+## Python
+
+```sh
+pip install relay-dbauth
+```
+
+PostgreSQL with psycopg 3:
+
+```python
+import boto3, psycopg
+from relay_dbauth import TokenSource
+
+session = boto3.Session()
+tokens = TokenSource("orders.ab1cd.db.userelay.sh", session.region_name, session.get_credentials())
+
+conn = psycopg.connect(
+    "postgresql://orders_app@orders.ab1cd.db.userelay.sh:5432/app?sslmode=verify-full",
+    password=tokens.token(),
+)
+```
+
+Valkey with valkey-py (redis-py works the same with `redis.credentials.CredentialProvider`):
+
+```python
+import valkey
+from valkey.credentials import CredentialProvider
+
+class RelayCredentials(CredentialProvider):
+    def get_credentials(self):
+        return "orders_app", tokens.token()
+
+client = valkey.Valkey(host="cache.ab1cd.db.userelay.sh", port=6379, ssl=True, credential_provider=RelayCredentials())
+```
+
+`relay_dbauth.new_token` mints a single token without caching.
